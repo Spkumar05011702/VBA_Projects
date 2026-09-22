@@ -177,3 +177,103 @@
                 #"Filtered Rows3" = Table.SelectRows(#"Added Custom", each ([IsValidContact] = "Valid"))
             in
                 #"Filtered Rows3"
+
+
+
+
+## Project Work Dax
+
+Beginning Dependency Count =
+VAR StartWeek =
+    MIN('Calendar'[Week Start Date])
+RETURN
+CALCULATE (
+    DISTINCTCOUNT ( Dependency[Dependency ID] ),
+    Dependency[Created Date] < StartWeek,
+    ISBLANK ( Dependency[Closed Date] )
+        || Dependency[Closed Date] >= StartWeek
+)
+
+
+New Dependencies =
+VAR StartWeek =
+    MIN('Calendar'[Week Start Date])
+
+VAR EndWeek =
+    MAX('Calendar'[Week End Date])
+
+RETURN
+CALCULATE (
+    DISTINCTCOUNT ( Dependency[Dependency ID] ),
+    Dependency[Created Date] >= StartWeek,
+    Dependency[Created Date] <= EndWeek
+)
+
+
+Closed Dependencies =
+VAR StartWeek =
+    MIN('Calendar'[Week Start Date])
+
+VAR EndWeek =
+    MAX('Calendar'[Week End Date])
+
+RETURN
+CALCULATE (
+    DISTINCTCOUNT ( Dependency[Dependency ID] ),
+    Dependency[Closed Date] >= StartWeek,
+    Dependency[Closed Date] <= EndWeek
+)
+
+
+
+Ending Dependency Count =
+VAR EndWeek =
+    MAX('Calendar'[Week End Date])
+
+RETURN
+CALCULATE (
+    DISTINCTCOUNT ( Dependency[Dependency ID] ),
+    Dependency[Created Date] <= EndWeek,
+    ISBLANK ( Dependency[Closed Date] )
+        || Dependency[Closed Date] > EndWeek
+)
+
+
+Past Due Proposed Date =
+VAR EndWeek =
+    MAX('Calendar'[Week End Date])
+
+RETURN
+CALCULATE (
+    DISTINCTCOUNT ( Dependency[Dependency ID] ),
+    Dependency[Proposed Date] < EndWeek,
+    ISBLANK ( Dependency[Closed Date] )
+)
+
+
+
+KPI =
+DATATABLE(
+    "Metric", STRING,
+    {
+        {"Beginning Dependency Count"},
+        {"New Dependencies"},
+        {"Closed Dependencies"},
+        {"Ending Dependency Count"},
+        {"Past Due per Proposed Date"}
+    }
+)
+
+
+KPI Value =
+SWITCH(
+    SELECTEDVALUE(KPI[Metric]),
+    "Beginning Dependency Count", [Beginning Dependency Count],
+    "New Dependencies", [New Dependencies],
+    "Closed Dependencies", [Closed Dependencies],
+    "Ending Dependency Count", [Ending Dependency Count],
+    "Past Due per Proposed Date", [Past Due Proposed Date]
+)
+
+
+
