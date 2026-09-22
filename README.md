@@ -182,98 +182,163 @@
 
 
 ## Project Work Dax
+                        
+                        Beginning Dependency Count =
+                        VAR StartWeek =
+                            MIN('Calendar'[Week Start Date])
+                        RETURN
+                        CALCULATE (
+                            DISTINCTCOUNT ( Dependency[Dependency ID] ),
+                            Dependency[Created Date] < StartWeek,
+                            ISBLANK ( Dependency[Closed Date] )
+                                || Dependency[Closed Date] >= StartWeek
+                        )
+                        
+                        
+                        New Dependencies =
+                        VAR StartWeek =
+                            MIN('Calendar'[Week Start Date])
+                        
+                        VAR EndWeek =
+                            MAX('Calendar'[Week End Date])
+                        
+                        RETURN
+                        CALCULATE (
+                            DISTINCTCOUNT ( Dependency[Dependency ID] ),
+                            Dependency[Created Date] >= StartWeek,
+                            Dependency[Created Date] <= EndWeek
+                        )
+                        
+                        
+                        Closed Dependencies =
+                        VAR StartWeek =
+                            MIN('Calendar'[Week Start Date])
+                        
+                        VAR EndWeek =
+                            MAX('Calendar'[Week End Date])
+                        
+                        RETURN
+                        CALCULATE (
+                            DISTINCTCOUNT ( Dependency[Dependency ID] ),
+                            Dependency[Closed Date] >= StartWeek,
+                            Dependency[Closed Date] <= EndWeek
+                        )
+                        
+                        
+                        
+                        Ending Dependency Count =
+                        VAR EndWeek =
+                            MAX('Calendar'[Week End Date])
+                        
+                        RETURN
+                        CALCULATE (
+                            DISTINCTCOUNT ( Dependency[Dependency ID] ),
+                            Dependency[Created Date] <= EndWeek,
+                            ISBLANK ( Dependency[Closed Date] )
+                                || Dependency[Closed Date] > EndWeek
+                        )
+                        
+                        
+                        Past Due Proposed Date =
+                        VAR EndWeek =
+                            MAX('Calendar'[Week End Date])
+                        
+                        RETURN
+                        CALCULATE (
+                            DISTINCTCOUNT ( Dependency[Dependency ID] ),
+                            Dependency[Proposed Date] < EndWeek,
+                            ISBLANK ( Dependency[Closed Date] )
+                        )
+                        
+                        
+                        
+                        KPI =
+                        DATATABLE(
+                            "Metric", STRING,
+                            {
+                                {"Beginning Dependency Count"},
+                                {"New Dependencies"},
+                                {"Closed Dependencies"},
+                                {"Ending Dependency Count"},
+                                {"Past Due per Proposed Date"}
+                            }
+                        )
+                        
+                        
+                        KPI Value =
+                        SWITCH(
+                            SELECTEDVALUE(KPI[Metric]),
+                            "Beginning Dependency Count", [Beginning Dependency Count],
+                            "New Dependencies", [New Dependencies],
+                            "Closed Dependencies", [Closed Dependencies],
+                            "Ending Dependency Count", [Ending Dependency Count],
+                            "Past Due per Proposed Date", [Past Due Proposed Date]
+                        )
 
-Beginning Dependency Count =
-VAR StartWeek =
-    MIN('Calendar'[Week Start Date])
-RETURN
-CALCULATE (
-    DISTINCTCOUNT ( Dependency[Dependency ID] ),
-    Dependency[Created Date] < StartWeek,
-    ISBLANK ( Dependency[Closed Date] )
-        || Dependency[Closed Date] >= StartWeek
-)
+## P- copy-2
 
-
-New Dependencies =
-VAR StartWeek =
-    MIN('Calendar'[Week Start Date])
-
-VAR EndWeek =
-    MAX('Calendar'[Week End Date])
-
-RETURN
-CALCULATE (
-    DISTINCTCOUNT ( Dependency[Dependency ID] ),
-    Dependency[Created Date] >= StartWeek,
-    Dependency[Created Date] <= EndWeek
-)
-
-
-Closed Dependencies =
-VAR StartWeek =
-    MIN('Calendar'[Week Start Date])
-
-VAR EndWeek =
-    MAX('Calendar'[Week End Date])
-
-RETURN
-CALCULATE (
-    DISTINCTCOUNT ( Dependency[Dependency ID] ),
-    Dependency[Closed Date] >= StartWeek,
-    Dependency[Closed Date] <= EndWeek
-)
+                        KPI =
+                  DATATABLE(
+                      "Metric", STRING,
+                      {
+                          {"Beginning Dependency Count"},
+                          {"New Dependencies"},
+                          {"Closed Dependencies"},
+                          {"Ending Dependency Count"},
+                          {"Past Due per Proposed Date"}
+                      }
+                  )
 
 
 
-Ending Dependency Count =
-VAR EndWeek =
-    MAX('Calendar'[Week End Date])
 
-RETURN
-CALCULATE (
-    DISTINCTCOUNT ( Dependency[Dependency ID] ),
-    Dependency[Created Date] <= EndWeek,
-    ISBLANK ( Dependency[Closed Date] )
-        || Dependency[Closed Date] > EndWeek
-)
-
-
-Past Due Proposed Date =
-VAR EndWeek =
-    MAX('Calendar'[Week End Date])
-
-RETURN
-CALCULATE (
-    DISTINCTCOUNT ( Dependency[Dependency ID] ),
-    Dependency[Proposed Date] < EndWeek,
-    ISBLANK ( Dependency[Closed Date] )
-)
-
-
-
-KPI =
-DATATABLE(
-    "Metric", STRING,
-    {
-        {"Beginning Dependency Count"},
-        {"New Dependencies"},
-        {"Closed Dependencies"},
-        {"Ending Dependency Count"},
-        {"Past Due per Proposed Date"}
-    }
-)
-
-
-KPI Value =
-SWITCH(
-    SELECTEDVALUE(KPI[Metric]),
-    "Beginning Dependency Count", [Beginning Dependency Count],
-    "New Dependencies", [New Dependencies],
-    "Closed Dependencies", [Closed Dependencies],
-    "Ending Dependency Count", [Ending Dependency Count],
-    "Past Due per Proposed Date", [Past Due Proposed Date]
-)
-
-
-
+                  KPI Value =
+                  VAR Metric_ = SELECTEDVALUE(KPI[Metric])
+                  
+                  VAR StartWeek =
+                      MIN('Calendar'[Start Week])
+                  
+                  VAR EndWeek =
+                      MAX('Calendar'[End Week])
+                  
+                  RETURN
+                  SWITCH(
+                      Metric_,
+                  
+                      "Beginning Dependency Count",
+                          CALCULATE(
+                              DISTINCTCOUNT(Dependency[Jira Key]),
+                              Dependency[Created Date] < StartWeek,
+                              ISBLANK(Dependency[Closed Date]) ||
+                              Dependency[Closed Date] >= StartWeek
+                          ),
+                  
+                      "New Dependencies",
+                          CALCULATE(
+                              DISTINCTCOUNT(Dependency[Jira Key]),
+                              Dependency[Created Date] >= StartWeek,
+                              Dependency[Created Date] <= EndWeek
+                          ),
+                  
+                      "Closed Dependencies",
+                          CALCULATE(
+                              DISTINCTCOUNT(Dependency[Jira Key]),
+                              Dependency[Closed Date] >= StartWeek,
+                              Dependency[Closed Date] <= EndWeek
+                          ),
+                  
+                      "Ending Dependency Count",
+                          CALCULATE(
+                              DISTINCTCOUNT(Dependency[Jira Key]),
+                              Dependency[Created Date] <= EndWeek,
+                              ISBLANK(Dependency[Closed Date]) ||
+                              Dependency[Closed Date] > EndWeek
+                          ),
+                  
+                      "Past Due per Proposed Date",
+                          CALCULATE(
+                              DISTINCTCOUNT(Dependency[Jira Key]),
+                              Dependency[Proposed Date] < EndWeek,
+                              ISBLANK(Dependency[Closed Date])
+                          )
+                  )
